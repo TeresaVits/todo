@@ -1,7 +1,7 @@
 // src/components/TodoApp.js
 import React, { useContext, useState, useEffect, useCallback } from "react";
 import { TaskContext } from "./context/TaskContext";
-import { db } from 'firebase.js';
+import { db } from './firebase';
 import { collection, addDoc, updateDoc, deleteDoc, doc, getDocs } from 'firebase/firestore'; // Importe as funções necessárias do Firestore
 import "./style/TodoApp.css";
 import TodoHeader from "./components/TodoHeader";
