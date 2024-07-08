@@ -29,7 +29,7 @@ const taskReducer = (state, action) => {
                 ...task,
                 status: action.payload.status,
                 completedAt: action.payload.completedAt,
-                originalCompletedAt: action.payload.originalCompletedAt
+                originalCompletedAt: action.payload.originalCompletedAt,
               }
             : task
         ),
@@ -50,69 +50,38 @@ const taskReducer = (state, action) => {
 
 const getNextStatus = (currentStatus) => {
   switch (currentStatus) {
-    case 'incomplete':
-      return 'pending';
-    case 'pending':
-      return 'complete';
-    case 'complete':
-      return 'incomplete';
+    case "incomplete":
+      return "pending";
+    case "pending":
+      return "complete";
+    case "complete":
+      return "incomplete";
     default:
-      return 'incomplete';
+      return "incomplete";
   }
-};
-
-const categorizeTask = () => {
-  const categories = ["Estudo", "Trabalho", "Casa"];
-  const randomIndex = Math.floor(Math.random() * categories.length);
-  return categories[randomIndex];
-};
-
-const getRandomCompletionDate = () => {
-  const start = new Date();
-  const end = new Date();
-  end.setDate(start.getDate() + 30); // Define a data final como 30 dias após a data atual
-  const randomDate = new Date(start.getTime() + Math.random() * (end.getTime() - start.getTime()));
-  return randomDate.toISOString();
 };
 
 const TaskProvider = ({ children }) => {
   const [state, dispatch] = useReducer(taskReducer, initialState);
 
   useEffect(() => {
-    const fetchTasks = async () => {
-      dispatch({ type: "LOADING" });
-      try {
-        const response = await fetch("https://jsonplaceholder.typicode.com/todos");
-        const data = await response.json();
-        const categorizedTasks = data.slice(0, 10).map(task => ({
-          ...task,
-          category: categorizeTask(),
-          status: 'pending', // Define todas as tarefas como pendentes
-          completedAt: getRandomCompletionDate(),
-          originalCompletedAt: getRandomCompletionDate() // Guardar a data original
-        }));
-        dispatch({ type: "SET_TASKS", payload: categorizedTasks });
-      } catch (error) {
-        dispatch({ type: "SET_ERROR", payload: error.message });
-      }
-    };
-
-    fetchTasks();
+    dispatch({ type: "SET_TASKS", payload: [] }); // Inicializa a lista de tarefas vazia
   }, []);
 
   const toggleTaskCompletion = (id) => {
-    const task = state.tasks.find(task => task.id === id);
+    const task = state.tasks.find((task) => task.id === id);
     const newStatus = getNextStatus(task.status);
     let updatedTask = {
       ...task,
-      status: newStatus
+      status: newStatus,
     };
 
-    if (newStatus === 'complete') {
+    if (newStatus === "complete") {
       updatedTask = {
         ...updatedTask,
         completedAt: new Date().toISOString(),
-        originalCompletedAt: task.completedAt || new Date().toISOString() // Salvar a data original de conclusão
+        originalCompletedAt:
+          task.completedAt || new Date().toISOString(), // Salvar a data original de conclusão
       };
     } else {
       updatedTask = {

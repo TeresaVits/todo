@@ -1,11 +1,13 @@
-import React, { useContext, useState } from "react";
+// src/components/TodoApp.js
+import React, { useContext, useState, useEffect, useCallback } from "react";
 import { TaskContext } from "./context/TaskContext";
+import { db } from 'firebase.js';
+import { collection, addDoc, updateDoc, deleteDoc, doc, getDocs } from 'firebase/firestore'; // Importe as funções necessárias do Firestore
 import "./style/TodoApp.css";
 import TodoHeader from "./components/TodoHeader";
 import FilterButtons from "./components/FilterButtons";
 import TaskList from "./components/TaskList";
 import AddTaskForm from "./components/AddTaskForm";
-
 
 const TodoApp = () => {
   const { state, dispatch } = useContext(TaskContext);
@@ -27,6 +29,19 @@ const TodoApp = () => {
     }
   };
 
+  // Função para buscar as tarefas do Firestore
+  const fetchTasks = useCallback(async () => {
+    const querySnapshot = await getDocs(collection(db, 'tasks'));
+    const tasks = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    dispatch({ type: 'SET_TASKS', payload: tasks });
+  }, [dispatch]);
+  
+
+  useEffect(() => {
+    fetchTasks(); // Buscar as tarefas quando o componente for montado
+  }, [fetchTasks]);
+  
+
   const filteredTasks = (() => {
     let tasksToDisplay = state.tasks;
 
@@ -47,23 +62,30 @@ const TodoApp = () => {
     return tasksToDisplay.sort((a, b) => b.id - a.id);
   })();
 
-  const addTask = () => {
+  const addTask = async () => {
     if (newTask.trim() !== "" && category !== "" && completionDate !== "") {
       const newTaskObject = {
-        id: Date.now(),
         title: newTask,
         status: 'pending', // Define a tarefa como pendente por padrão
         category: category,
         completedAt: new Date(completionDate).toISOString(),
       };
-      dispatch({ type: "ADD_TASK", payload: newTaskObject });
+
+      try {
+        const docRef = await addDoc(collection(db, 'tasks'), newTaskObject);
+        newTaskObject.id = docRef.id; // Adiciona o ID do documento ao objeto tarefa
+        dispatch({ type: "ADD_TASK", payload: newTaskObject });
+      } catch (e) {
+        console.error("Erro ao adicionar tarefa: ", e);
+      }
+
       setNewTask("");
       setCategory("");
       setCompletionDate(""); // Resetar a data de conclusão após adicionar a tarefa
-    } 
+    }
   };
 
-  const toggleTaskCompletion = (taskId) => {
+  const toggleTaskCompletion = async (taskId) => {
     const taskToUpdate = state.tasks.find((task) => task.id === taskId);
     const newStatus = getNextStatus(taskToUpdate.status);
     let updatedCompletionDate = taskToUpdate.completedAt;
@@ -83,11 +105,21 @@ const TodoApp = () => {
       originalCompletedAt: originalCompletedAt
     };
 
-    dispatch({ type: "UPDATE_TASK", payload: updatedTask });
+    try {
+      await updateDoc(doc(db, 'tasks', taskId), updatedTask);
+      dispatch({ type: "UPDATE_TASK", payload: updatedTask });
+    } catch (e) {
+      console.error("Erro ao atualizar tarefa: ", e);
+    }
   };
 
-  const deleteTask = (taskId) => {
-    dispatch({ type: "DELETE_TASK", payload: taskId });
+  const deleteTask = async (taskId) => {
+    try {
+      await deleteDoc(doc(db, 'tasks', taskId));
+      dispatch({ type: "DELETE_TASK", payload: taskId });
+    } catch (e) {
+      console.error("Erro ao deletar tarefa: ", e);
+    }
   };
 
   return (
