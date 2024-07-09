@@ -1,4 +1,3 @@
-// src/components/TodoApp.js
 import React, { useContext, useState, useEffect, useCallback } from "react";
 import { TaskContext } from "./context/TaskContext";
 import { db } from './firebase';
@@ -8,6 +7,7 @@ import TodoHeader from "./components/TodoHeader";
 import FilterButtons from "./components/FilterButtons";
 import TaskList from "./components/TaskList";
 import AddTaskForm from "./components/AddTaskForm";
+import TaskStatusLegend from "./components/TaskStatusLegend";
 
 const TodoApp = () => {
   const { state, dispatch } = useContext(TaskContext);
@@ -29,38 +29,22 @@ const TodoApp = () => {
     }
   };
 
-  // Função para buscar as tarefas do Firestore
+  // Função para buscar as tarefas do Firestore e ordenar por data de conclusão ascendente
   const fetchTasks = useCallback(async () => {
-    const querySnapshot = await getDocs(collection(db, 'tasks'));
-    const tasks = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-    dispatch({ type: 'SET_TASKS', payload: tasks });
+    try {
+      const querySnapshot = await getDocs(collection(db, 'tasks'));
+      let tasks = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      // Ordenar por data de conclusão (completedAt) de forma ascendente
+      tasks.sort((a, b) => (a.completedAt || '').localeCompare(b.completedAt || ''));
+      dispatch({ type: 'SET_TASKS', payload: tasks });
+    } catch (error) {
+      console.error("Erro ao buscar tarefas: ", error);
+    }
   }, [dispatch]);
-  
 
   useEffect(() => {
     fetchTasks(); // Buscar as tarefas quando o componente for montado
   }, [fetchTasks]);
-  
-
-  const filteredTasks = (() => {
-    let tasksToDisplay = state.tasks;
-
-    switch (filter) {
-      case "completed":
-        tasksToDisplay = tasksToDisplay.filter((task) => task.status === 'complete');
-        break;
-      case "incomplete":
-        tasksToDisplay = tasksToDisplay.filter((task) => task.status === 'incomplete');
-        break;
-      case "pending":
-        tasksToDisplay = tasksToDisplay.filter((task) => task.status === 'pending');
-        break;
-      default:
-        break;
-    }
-
-    return tasksToDisplay.sort((a, b) => b.id - a.id);
-  })();
 
   const addTask = async () => {
     if (newTask.trim() !== "" && category !== "" && completionDate !== "") {
@@ -74,14 +58,17 @@ const TodoApp = () => {
       try {
         const docRef = await addDoc(collection(db, 'tasks'), newTaskObject);
         newTaskObject.id = docRef.id; // Adiciona o ID do documento ao objeto tarefa
-        dispatch({ type: "ADD_TASK", payload: newTaskObject });
+
+        // Adiciona a nova tarefa ao início do array de tarefas local
+        const updatedTasks = [newTaskObject, ...state.tasks];
+        dispatch({ type: "SET_TASKS", payload: updatedTasks });
+
+        setNewTask("");
+        setCategory("");
+        setCompletionDate(""); // Resetar a data de conclusão após adicionar a tarefa
       } catch (e) {
         console.error("Erro ao adicionar tarefa: ", e);
       }
-
-      setNewTask("");
-      setCategory("");
-      setCompletionDate(""); // Resetar a data de conclusão após adicionar a tarefa
     }
   };
 
@@ -116,18 +103,33 @@ const TodoApp = () => {
   const deleteTask = async (taskId) => {
     try {
       await deleteDoc(doc(db, 'tasks', taskId));
-      dispatch({ type: "DELETE_TASK", payload: taskId });
+      const updatedTasks = state.tasks.filter(task => task.id !== taskId);
+      dispatch({ type: "SET_TASKS", payload: updatedTasks });
     } catch (e) {
       console.error("Erro ao deletar tarefa: ", e);
     }
   };
 
+  // Filtrar tarefas conforme o estado selecionado
+  const filteredTasks = state.tasks.filter((task) => {
+    if (filter === 'all') {
+      return true;
+    } else if (filter === 'completed') {
+      return task.status === 'complete';
+    } else {
+      return task.status === filter;
+    }
+  });
+
   return (
     <div className="todo-app-container">
       <div className="header">
+        <TodoHeader />
         <div className="subhead">
-          <TodoHeader />
           <FilterButtons filter={filter} setFilter={setFilter} />
+        </div>
+        <div className="subhead">
+          <TaskStatusLegend />
         </div>
       </div>
       <div className="main">
@@ -137,7 +139,7 @@ const TodoApp = () => {
             setNewTask={setNewTask}
             category={category}
             setCategory={setCategory}
-            completionDate={completionDate} // Passar a data de conclusão como prop
+            completionDate={completionDate}
             setCompletionDate={setCompletionDate} // Passar o setter da data de conclusão como prop
             addTask={addTask}
           />

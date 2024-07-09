@@ -1,29 +1,33 @@
 import React from "react";
 
 const FilterButtons = ({ filter, setFilter }) => {
+  const handleFilterChange = (newFilter) => {
+    setFilter(newFilter);
+  };
+
   return (
     <div className="filter-buttons">
       <button
         className={filter === "all" ? "active" : ""}
-        onClick={() => setFilter("all")}
+        onClick={() => handleFilterChange("all")}
       >
         Tudo
       </button>
       <button
         className={filter === "completed" ? "active" : ""}
-        onClick={() => setFilter("completed")}
+        onClick={() => handleFilterChange("completed")}
       >
         Completo
       </button>
       <button
         className={filter === "incomplete" ? "active" : ""}
-        onClick={() => setFilter("incomplete")}
+        onClick={() => handleFilterChange("incomplete")}
       >
         Incompleto
       </button>
       <button
         className={filter === "pending" ? "active" : ""}
-        onClick={() => setFilter("pending")}
+        onClick={() => handleFilterChange("pending")}
       >
         Pendente
       </button>
