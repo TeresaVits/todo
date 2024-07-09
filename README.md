@@ -12,7 +12,7 @@ Essa aplicação foi feita utilizando o react, possibilitando que o usuário adi
 - Casa a tarefa tenha sido concluida, a data de conclusão muda para o dia atual
 - Filtre as tarefas entre completas, incompletas ou pendentes
 
-# Tecnologias utilizadas
+## Tecnologias utilizadas
 
 - React
 - Context API
