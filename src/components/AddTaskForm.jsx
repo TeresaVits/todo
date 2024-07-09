@@ -1,11 +1,19 @@
 import React from "react";
 
-const AddTaskForm = ({ newTask, setNewTask, category, setCategory, completionDate, setCompletionDate, addTask }) => {
+const AddTaskForm = ({
+  newTask,
+  setNewTask,
+  category,
+  setCategory,
+  completionDate,
+  setCompletionDate,
+  addTask,
+}) => {
   return (
     <div className="add-task-container">
       <input
         type="text"
-        placeholder="Novas tarefas"
+        placeholder="Nova tarefa"
         value={newTask}
         onChange={(e) => setNewTask(e.target.value)}
       />
@@ -14,10 +22,18 @@ const AddTaskForm = ({ newTask, setNewTask, category, setCategory, completionDat
         onChange={(e) => setCategory(e.target.value)}
         className="task-category-select"
       >
-        <option value="" disabled hidden>Selecione a categoria</option>
-        <option value="Estudo" className="estudo">Estudo</option>
-        <option value="Trabalho" className="trabalho">Trabalho</option>
-        <option value="Casa" className="casa">Casa</option>
+        <option value="" disabled hidden>
+          Selecione a categoria
+        </option>
+        <option value="Estudo" className="estudo">
+          Estudo
+        </option>
+        <option value="Trabalho" className="trabalho">
+          Trabalho
+        </option>
+        <option value="Casa" className="casa">
+          Casa
+        </option>
       </select>
       <input
         type="date"
